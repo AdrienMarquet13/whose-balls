@@ -576,6 +576,14 @@
     font-family: "Bungee", sans-serif;
   }
 </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-LJK07FVFN2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-LJK07FVFN2');
+</script>
 </head>
 <body>
 <canvas id="confetti-canvas"></canvas>
@@ -1058,5 +1066,110 @@ function launchConfetti() {
 
 startGame();
 </script>
+
+<!-- ================================================================ -->
+<!-- ANALYTICS (added separately — does not modify any game code/logic) -->
+<!-- ================================================================ -->
+<script>
+(function() {
+  // Small helper: wraps an existing global function so it still behaves
+  // 100% the same, but also fires a GA4 event after it runs.
+  function trackFn(fnName, buildParams) {
+    var original = window[fnName];
+    if (typeof original !== 'function') return;
+    window[fnName] = function() {
+      var result = original.apply(this, arguments);
+      try {
+        var params = buildParams ? buildParams.apply(this, arguments) : {};
+        gtag('event', fnName + '_fired', params);
+      } catch (e) { /* never let analytics break the game */ }
+      return result;
+    };
+  }
+
+  // --- Gameplay funnel events ---
+
+  // The very first startGame() call already ran (right before this script
+  // loaded), so fire that initial game_start manually, then wrap the
+  // function for every subsequent call (e.g. "Play Again").
+  gtag('event', 'game_start');
+  trackFn('startGame', function() {
+    return {};
+  });
+
+  trackFn('handleChoice', function(choice, subject) {
+    return {
+      round: (typeof currentIndex !== 'undefined') ? currentIndex + 1 : undefined,
+      subject_name: subject && subject.name,
+      choice_selected: choice,
+      is_correct: subject ? (choice === subject.name) : undefined
+    };
+  });
+
+  trackFn('nextRound', function() {
+    return { round: (typeof currentIndex !== 'undefined') ? currentIndex + 1 : undefined };
+  });
+
+  trackFn('showEndScreen', function() {
+    return {
+      score: (typeof score !== 'undefined') ? score : undefined,
+      total_rounds: 8
+    };
+  });
+
+  trackFn('showVideoModal', function() { return {}; });
+  trackFn('closeVideoModal', function() { return {}; });
+  trackFn('showSignupForm', function() { return {}; });
+  trackFn('closeSignupScreen', function() { return {}; });
+  trackFn('showThankYouPopup', function() { return {}; });
+
+  // --- Generic "what button did they press" tracking ---
+  // Catches every button click on the page via event delegation, so any
+  // button gets tracked even if new ones are added dynamically (like the
+  // per-round answer choice buttons), without touching game code.
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest ? e.target.closest('button') : null;
+    if (!btn) return;
+    gtag('event', 'button_click', {
+      button_id: btn.id || undefined,
+      button_class: btn.className || undefined,
+      button_text: (btn.textContent || '').trim().slice(0, 100)
+    });
+  }, true);
+
+  // --- Signup form submission outcome ---
+  // Added as an EXTRA listener alongside the existing one already on the
+  // form; it doesn't call preventDefault or interfere, it just observes.
+  var signupForm = document.getElementById('signup-form');
+  if (signupForm) {
+    signupForm.addEventListener('submit', function() {
+      gtag('event', 'signup_form_submitted');
+    });
+  }
+
+  // --- Exit / engagement tracking ---
+  var sessionStart = Date.now();
+
+  function sendExitEvent(reason) {
+    gtag('event', 'page_exit', {
+      reason: reason,
+      seconds_on_page: Math.round((Date.now() - sessionStart) / 1000),
+      score_at_exit: (typeof score !== 'undefined') ? score : undefined,
+      round_at_exit: (typeof currentIndex !== 'undefined') ? currentIndex + 1 : undefined
+    });
+  }
+
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+      sendExitEvent('visibility_hidden');
+    }
+  });
+
+  window.addEventListener('pagehide', function() {
+    sendExitEvent('pagehide');
+  });
+})();
+</script>
+
 </body>
 </html>
