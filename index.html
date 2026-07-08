@@ -7,14 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
-<!-- Google Analytics (GA4) — Whose Balls property -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-LJK07FVFN2"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-LJK07FVFN2');
-</script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -622,17 +614,17 @@
     <div class="end-tag">★ Anthony's Balls — Coming Soon ★</div>
 
     <div id="high-score-action" style="display:none">
-      <button class="peek-btn" onclick="gtag('event','peek_button_click',{score:score}); showVideoModal()">You want a peek at Anthony's balls?</button>
+      <button class="peek-btn" onclick="showVideoModal()">You want a peek at Anthony's balls?</button>
     </div>
 
     <div id="low-score-action" style="display:none">
-      <button class="more-balls-btn" onclick="gtag('event','more_balls_click',{score:score}); showSignupForm('low_score_direct')">Want to see more balls?</button>
+      <button class="more-balls-btn" onclick="showSignupForm()">Want to see more balls?</button>
       <p class="more-balls-desc">Sign up and get notified when Anthony's Balls drop!</p>
     </div>
 
-    <button class="play-again-btn" onclick="gtag('event','play_again_click',{score:score}); startGame()">PLAY AGAIN</button>
+    <button class="play-again-btn" onclick="startGame()">PLAY AGAIN</button>
     <br>
-    <a class="insta-btn" href="https://www.instagram.com/anthonysballs.mov/" target="_blank" rel="noopener" onclick="gtag('event','instagram_follow_click')">
+    <a class="insta-btn" href="https://www.instagram.com/anthonysballs.mov/" target="_blank" rel="noopener">
       <svg class="insta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="white" stroke-width="2" fill="none"/>
         <circle cx="12" cy="12" r="4.5" stroke="white" stroke-width="2" fill="none"/>
@@ -645,14 +637,14 @@
 
 <!-- VIDEO MODAL -->
 <div id="video-modal" class="video-modal" style="display:none">
-  <video id="ab-video" src="videos/AB_clip_3.mp4" controls playsinline onended="closeVideoModal(false)"></video>
-  <button class="video-skip-btn" onclick="closeVideoModal(true)">SKIP &raquo;</button>
+  <video id="ab-video" src="videos/AB_clip_3.mp4" controls playsinline onended="closeVideoModal()"></video>
+  <button class="video-skip-btn" onclick="closeVideoModal()">SKIP &raquo;</button>
 </div>
 
 <!-- EMAIL SIGNUP SCREEN -->
 <div id="signup-screen" class="signup-screen" style="display:none">
   <div class="signup-wrap" style="position:relative">
-    <button class="signup-close-btn" onclick="gtag('event','signup_abandoned'); closeSignupScreen()" aria-label="Close">&times;</button>
+    <button class="signup-close-btn" onclick="closeSignupScreen()" aria-label="Close">&times;</button>
     <span class="signup-tag">Coming Soon</span>
     <p class="signup-title">Anthony's Balls</p>
     <p class="signup-desc">Be the first to know when the film drops! You won't get spammed — we will only notify you when the balls drop!</p>
@@ -784,19 +776,15 @@ function showVideoModal() {
   video.play();
 }
 
-function closeVideoModal(skipped) {
+function closeVideoModal() {
   var modal = document.getElementById('video-modal');
   var video = document.getElementById('ab-video');
-  gtag('event', skipped ? 'peek_video_skipped' : 'peek_video_completed', {
-    video_time: Math.round(video.currentTime)
-  });
   video.pause();
   modal.style.display = 'none';
-  showSignupForm(skipped ? 'after_peek_video_skipped' : 'after_peek_video_completed');
+  showSignupForm();
 }
 
-function showSignupForm(source) {
-  gtag('event', 'signup_form_shown', { source: source || 'unknown' });
+function showSignupForm() {
   document.getElementById('signup-screen').style.display = 'flex';
 }
 
@@ -871,21 +859,16 @@ document.getElementById('signup-form').addEventListener('submit', async function
 
   try {
     await submitToGoogleSheets(firstName, lastName, email);
-    gtag('event', 'signup_submitted', { score: score });
     document.getElementById('signup-screen').style.display = 'none';
     showThankYouPopup();
   } catch(err) {
-    gtag('event', 'signup_error');
     error.style.display = 'block';
     btn.disabled = false;
     btn.textContent = 'Notify Me';
   }
 });
 
-let hasPlayedBefore = false;
 function startGame() {
-  gtag('event', hasPlayedBefore ? 'game_replay' : 'game_start');
-  hasPlayedBefore = true;
   order = shuffle([...Array(8).keys()]);
   currentIndex = 0; score = 0;
   document.getElementById('end-screen').classList.remove('visible');
@@ -948,12 +931,6 @@ function handleChoice(choice, subject) {
   const isCorrect = choice === subject.name;
   if (isCorrect) score++;
 
-  gtag('event', 'question_answered', {
-    round: currentIndex + 1,
-    correct: isCorrect,
-    subject: subject.name
-  });
-
   // Style all buttons
   const btns = document.querySelectorAll('.choice-btn');
   btns.forEach(btn => {
@@ -988,8 +965,6 @@ function nextRound() {
 }
 
 function showEndScreen() {
-  gtag('event', 'game_complete', { score: score });
-
   document.getElementById('game-section').style.display = 'none';
   const es = document.getElementById('end-screen');
   es.classList.add('visible');
